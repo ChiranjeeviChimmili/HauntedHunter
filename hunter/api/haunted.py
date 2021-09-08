@@ -10,7 +10,7 @@ def state_info(state):
             para_text = paragraph.get_text()
             split_soup = para_text.split('\n\n')
     return split_soup
-            
+
 def find_city(city, state):
     haunted_list = []
     locations = state_info(state)

@@ -1,17 +1,28 @@
-from flask import Flask, render_template, request
-import requests, json
-from main import*
 from haunted import *
 from geocode import *
 from googlemap import *
+from testing import *
+from flask import Flask, send_from_directory,  render_template, request
+from flask_restful import Api, Resource, reqparse
+from flask_cors import CORS #comment this on deployment
 
 app = Flask(__name__)
+api = Api(app)
 
-@app.route("/", methods = ['GET', 'POST'])
-def index():
-    if request.method == "POST":
-        your_city = request.form['city']
-        state = request.form['state']
+TODOS = {
+    'todo1': {'task': 'build an API'},
+    'todo2': {'task': '?????'},
+    'todo3': {'task': 'profit!'},
+}
+
+class HauntedList(Resource):
+
+    def get(self): 
+        return {'': ""}, 200
+    def post(self):
+        json_data = request.get_json(force=True)
+        your_city = json_data['city']
+        state = json_data['state']
 
         n = 1
         if state == 'texas':
@@ -26,6 +37,7 @@ def index():
                 state_search = state + str(x)
                 for c in find_all_cities(state_info(state_search)):
                     all_cities_list.append(c)
+                    
             for city in all_cities_list:
                 x = get_distance((your_city + ',' + state), (city + ',' + state))
                 if x is not None and x < 30000:
@@ -40,12 +52,18 @@ def index():
                 for city in nearby_cities:
                     hl.append(find_city(city, state_search))
             return hl
-
+        
         final_list = []
+
         for location in haunted_locations(nearby(your_city, state), state):
             for place in location:
                 final_list.append(get_name(place) + '\n' + get_description(place) + '\n\n')
+        return {
+            'hauntedList' : final_list
+        }, 200
 
-        return render_template("result.html", city = your_city, results = final_list)
-    
-    return render_template("index.html")
+api.add_resource(HauntedList, '/')
+
+app.run(debug=True)
+
+
